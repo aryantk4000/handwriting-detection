@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Handwriting Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        .image-box img {
+            max-width: 300px;
+            margin-bottom: 20px;
+        }
+        .plot {
+            max-width: 600px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Handwriting Character Recognition</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <button type="submit">Upload & Predict</button>
+    </form>
+
+    {% if filename %}
+        <hr>
+        <div class="image-box">
+            <h3>Uploaded Image</h3>
+            <img src="{{ url_for('static', filename='uploads/' ~ filename) }}" alt="Uploaded Image">
+        </div>
+
+        <h2>Prediction: {{ pred_label }} ({{ pred_confidence }}%)</h2>
+
+        <div class="plot">
+            <h3>Prediction Confidence Bar Chart</h3>
+            <img src="data:image/png;base64,{{ barplot_img }}" alt="Prediction Chart">
+        </div>
+
+        <div class="plot">
+            <h3>Confusion Matrix (Top Predictions)</h3>
+            <img src="data:image/png;base64,{{ conf_matrix_img }}" alt="Confusion Matrix">
+        </div>
+    {% endif %}
+</body>
+</html>
