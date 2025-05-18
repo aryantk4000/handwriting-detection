@@ -2,90 +2,282 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Handwriting Recognition</title>
+    <title>Handwriting Sentence Recognition</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 40px;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
         }
-        .image-box img {
-            max-width: 200px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            padding: 5px;
-            background: #f9f9f9;
+        h1, h2, h3 {
+            color: #0056b3;
         }
-        .image-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 25px;
-            margin-bottom: 40px;
+        form {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            border-radius: 8px;
         }
-        .image-box {
+        input[type="file"] {
+            margin-right: 15px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        hr {
+            border: 0;
+            height: 1px;
+            background: #eee;
+            margin: 40px 0;
+        }
+        .section-header {
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .error-message { /* New style for error message */
+            color: red;
+            font-weight: bold;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid red;
+            background-color: #ffe0e0;
+            border-radius: 5px;
+        }
+        .full-sentence-display {
             text-align: center;
-            max-width: 220px;
-        }
-        .plot {
-            max-width: 600px;
             margin-bottom: 30px;
         }
-        h3 {
+        .full-sentence-display img {
+            max-width: 80%;
+            border: 1px solid #ddd;
+            background: #fff;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .segmentation-steps-container,
+        .preproc-steps-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .segmentation-step,
+        .preproc-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 150px; /* Wider for segmentation steps */
+            flex-shrink: 0;
+        }
+        .segmentation-step img,
+        .preproc-step img {
+            border: 1px solid #ddd;
+            padding: 3px;
+            background: #fff;
+            width: 140px; /* Adjust size */
+            height: auto; /* Maintain aspect ratio */
+            object-fit: contain;
             margin-bottom: 5px;
-            font-size: 1.1em;
+        }
+        .segmentation-step p,
+        .preproc-step p {
+            font-size: 0.85em;
+            color: #555;
+            margin: 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        .char-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .char-box {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 380px; /* Adjusted width to accommodate more plots/text */
+        }
+        .char-box h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .char-box img {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+            padding: 5px;
+        }
+        .plot-img {
+            max-width: 95%; /* Make plots slightly wider */
+            height: auto;
+            margin-top: 10px;
+        }
+        .top-predictions-list {
+            text-align: left;
+            margin: 15px 0;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        .top-predictions-list ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.9em;
+        }
+        .top-predictions-list li {
+            margin-bottom: 3px;
+            color: #444;
+        }
+        .top-predictions-list li span {
+            font-weight: bold;
+            color: #007bff;
         }
     </style>
 </head>
 <body>
-    <h1>Handwriting Character Recognition</h1>
+    <h1>Handwriting Sentence Recognition</h1>
     <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="file" required>
+        <label for="file-upload">Upload a handwritten sentence image:</label>
+        <input type="file" name="file" id="file-upload" accept="image/*" required>
         <button type="submit">Upload & Predict</button>
     </form>
 
+    {% if error_message %}
+        <div class="error-message">{{ error_message }}</div>
+    {% endif %}
+
     {% if filename %}
         <hr>
-        <h2>Uploaded and Preprocessed Images</h2>
-        <div class="image-grid">
-            <div class="image-box">
-                <h3>Original</h3>
-                <img src="data:image/png;base64,{{ original_img }}" alt="Original Image">
-            </div>
-            <div class="image-box">
-                <h3>Grayscale</h3>
-                <img src="data:image/png;base64,{{ grayscale_img }}" alt="Grayscale Image">
-            </div>
-            <div class="image-box">
-                <h3>Blurred</h3>
-                <img src="data:image/png;base64,{{ blurred_img }}" alt="Blurred Image">
-            </div>
-            <div class="image-box">
-                <h3>Thresholded</h3>
-                <img src="data:image/png;base64,{{ thresholded_img }}" alt="Thresholded Image">
-            </div>
-            <div class="image-box">
-                <h3>Padded</h3>
-                <img src="data:image/png;base64,{{ padded_img }}" alt="Padded Image">
-            </div>
-            <div class="image-box">
-                <h3>Resized (224×224)</h3>
-                <img src="data:image/png;base64,{{ resized_img }}" alt="Resized Image">
-            </div>
-            <div class="image-box">
-                <h3>Normalized</h3>
-                <img src="data:image/png;base64,{{ normalized_img }}" alt="Normalized Image">
-            </div>
+        <h2 class="section-header">Original Sentence Image</h2>
+        <div class="full-sentence-display">
+            <img src="data:image/png;base64,{{ original_full_sentence_img }}" alt="Uploaded Sentence Image">
         </div>
 
-        <h2>Prediction: {{ pred_label }} ({{ pred_confidence }}%)</h2>
-
-        <div class="plot">
-            <h3>Prediction Confidence Bar Chart</h3>
-            <img src="data:image/png;base64,{{ barplot_img }}" alt="Prediction Chart">
+        <h2 class="section-header">Segmentation Process Steps (Full Image)</h2>
+        <div class="segmentation-steps-container">
+            {% if intermediate_segmentation_steps.grayscale_img_b64 %}
+                <div class="segmentation-step">
+                    <p>Grayscale</p>
+                    <img src="data:image/png;base64,{{ intermediate_segmentation_steps.grayscale_img_b64 }}" alt="Grayscale">
+                </div>
+            {% endif %}
+            {% if intermediate_segmentation_steps.binary_img_b64 %}
+                <div class="segmentation-step">
+                    <p>Binarized (Otsu)</p>
+                    <img src="data:image/png;base64,{{ intermediate_segmentation_steps.binary_img_b64 }}" alt="Binarized">
+                </div>
+            {% endif %}
+            {% if intermediate_segmentation_steps.contours_img_b64 %}
+                <div class="segmentation-step">
+                    <p>Detected Contours</p>
+                    <img src="data:image/png;base64,{{ intermediate_segmentation_steps.contours_img_b64 }}" alt="Contours">
+                </div>
+            {% endif %}
+        </div>
+        <h2 class="section-header">Segmentation & Predicted Overlay</h2>
+        <div class="full-sentence-display">
+            {% if full_sentence_with_preds_img %}
+                <img src="data:image/png;base64,{{ full_sentence_with_preds_img }}" alt="Sentence with Predictions">
+                <p>Green boxes show detected characters. Red labels are predictions.</p>
+            {% else %}
+                <p>Prediction overlay image not available (original image might have failed to load).</p>
+            {% endif %}
         </div>
 
-        <div class="plot">
-            <h3>Confusion Matrix (Top Predictions)</h3>
-            <img src="data:image/png;base64,{{ conf_matrix_img }}" alt="Confusion Matrix">
+        <h2 class="section-header">Predicted Sentence: <span style="color: green;">{{ predicted_sentence }}</span></h2>
+
+        <h2 class="section-header">Individual Character Analysis</h2>
+        <div class="char-container">
+            {% for char_data in individual_char_data %}
+                <div class="char-box">
+                    <h3>Character {{ char_data.char_num }}</h3>
+                    
+                    <h4>Preprocessing Steps:</h4>
+                    <div class="preproc-steps-container">
+                        {% if char_data.raw_segment_img %}
+                        <div class="preproc-step">
+                            <p>Raw Segment</p>
+                            <img src="data:image/png;base64,{{ char_data.raw_segment_img }}" alt="Raw Segment {{ char_data.char_num }}">
+                        </div>
+                        {% endif %}
+                        {% if char_data.intermediate_preprocessing.inverted_img_b64 %}
+                        <div class="preproc-step">
+                            <p>Inverted</p>
+                            <img src="data:image/png;base64,{{ char_data.intermediate_preprocessing.inverted_img_b64 }}" alt="Inverted Image {{ char_data.char_num }}">
+                        </div>
+                        {% endif %}
+                        {% if char_data.intermediate_preprocessing.thresholded_img_b64 %}
+                        <div class="preproc-step">
+                            <p>Thresholded</p>
+                            <img src="data:image/png;base64,{{ char_data.intermediate_preprocessing.thresholded_img_b64 }}" alt="Thresholded Image {{ char_data.char_num }}">
+                        </div>
+                        {% endif %}
+                        {% if char_data.intermediate_preprocessing.padded_img_b64 %}
+                        <div class="preproc-step">
+                            <p>Padded Square</p>
+                            <img src="data:image/png;base64,{{ char_data.intermediate_preprocessing.padded_img_b64 }}" alt="Padded Image {{ char_data.char_num }}">
+                        </div>
+                        {% endif %}
+                        {% if char_data.intermediate_preprocessing.resized_img_b64 %}
+                        <div class="preproc-step">
+                            <p>Resized (224x224)</p>
+                            <img src="data:image/png;base64,{{ char_data.intermediate_preprocessing.resized_img_b64 }}" alt="Resized Image {{ char_data.char_num }}">
+                        </div>
+                        {% endif %}
+                        {% if char_data.processed_char_img %}
+                        <div class="preproc-step">
+                            <p>Final (RGB)</p>
+                            <img src="data:image/png;base64,{{ char_data.processed_char_img }}" alt="Processed Char {{ char_data.char_num }}">
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <h4>Prediction: {{ char_data.predicted_label }} ({{ char_data.confidence }}%)</h4>
+
+                    <div class="top-predictions-list">
+                        <h5>Top 5 Confidences:</h5>
+                        <ul>
+                            {% for pred in char_data.top_predictions %}
+                                <li><span>{{ pred.label }}</span>: {{ "%.2f" | format(pred.confidence) }}%</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    {% if char_data.barplot_img %}
+                    <img class="plot-img" src="data:image/png;base64,{{ char_data.barplot_img }}" alt="Prediction Chart Char {{ char_data.char_num }}">
+                    {% endif %}
+                    
+                    {% if char_data.confusion_matrix_img %}
+                    <img class="plot-img" src="data:image/png;base64,{{ char_data.confusion_matrix_img }}" alt="Confusion Matrix Char {{ char_data.char_num }}">
+                    {% endif %}
+                </div>
+            {% endfor %}
         </div>
     {% endif %}
 </body>

@@ -12,7 +12,7 @@ train_dir = '../dataset/train'
 val_dir = '../dataset/val'
 test_dir = '../dataset/test'  # Not used during training but available for evaluation
 
-model_save_path = '../models/handwritten_mobilenetv2_fixed.keras'
+model_save_path = '../models/handwritten_mobilenetv2_fixed.keras' # Ensure this path is correct relative to where you run the script
 
 # Parameters
 img_size = (224, 224)
@@ -69,6 +69,7 @@ model.compile(
     metrics=['accuracy']
 )
 
+# Ensure the directory for saving the model exists
 os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
 
 # Callbacks
@@ -77,7 +78,7 @@ checkpoint = ModelCheckpoint(
     monitor='val_loss',
     save_best_only=True,
     verbose=1,
-    save_format='keras'
+    # REMOVE THIS LINE: save_format='keras'
 )
 reduce_lr = ReduceLROnPlateau(
     monitor='val_loss',
@@ -93,7 +94,8 @@ early_stop = EarlyStopping(
     restore_best_weights=True
 )
 
-# Initial training
+# Initial training (Phase 1: Feature Extraction)
+print("\n--- Starting Phase 1: Feature Extraction (Frozen Base Model) ---")
 history = model.fit(
     train_generator,
     epochs=30,
@@ -101,26 +103,27 @@ history = model.fit(
     callbacks=[checkpoint, reduce_lr, early_stop]
 )
 
-# Fine-tuning
-base_model.trainable = True
+# Fine-tuning (Phase 2: Unfreeze and Fine-Tune)
+print("\n--- Starting Phase 2: Fine-tuning (Unfrozen Base Model) ---")
+base_model.trainable = True # Unfreeze base layers
 fine_tune_at = 50  # Freeze first 50 layers
 
 for layer in base_model.layers[:fine_tune_at]:
     layer.trainable = False
 
 model.compile(
-    optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
+    optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4), # Lower learning rate for fine-tuning
     loss='categorical_crossentropy',
     metrics=['accuracy']
 )
 
 fine_tune_epochs = 30
-total_epochs = 30 + fine_tune_epochs
+total_epochs = 30 + fine_tune_epochs # Total epochs for this phase
 
 history_fine = model.fit(
     train_generator,
     epochs=total_epochs,
-    initial_epoch=history.epoch[-1] + 1,
+    initial_epoch=history.epoch[-1] + 1, # Start from the next epoch after initial training
     validation_data=val_generator,
     callbacks=[checkpoint, reduce_lr, early_stop]
 )
