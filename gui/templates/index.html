@@ -9,12 +9,29 @@
             margin: 40px;
         }
         .image-box img {
-            max-width: 300px;
-            margin-bottom: 20px;
+            max-width: 200px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            padding: 5px;
+            background: #f9f9f9;
+        }
+        .image-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        .image-box {
+            text-align: center;
+            max-width: 220px;
         }
         .plot {
             max-width: 600px;
             margin-bottom: 30px;
+        }
+        h3 {
+            margin-bottom: 5px;
+            font-size: 1.1em;
         }
     </style>
 </head>
@@ -27,9 +44,36 @@
 
     {% if filename %}
         <hr>
-        <div class="image-box">
-            <h3>Uploaded Image</h3>
-            <img src="{{ url_for('static', filename='uploads/' ~ filename) }}" alt="Uploaded Image">
+        <h2>Uploaded and Preprocessed Images</h2>
+        <div class="image-grid">
+            <div class="image-box">
+                <h3>Original</h3>
+                <img src="data:image/png;base64,{{ original_img }}" alt="Original Image">
+            </div>
+            <div class="image-box">
+                <h3>Grayscale</h3>
+                <img src="data:image/png;base64,{{ grayscale_img }}" alt="Grayscale Image">
+            </div>
+            <div class="image-box">
+                <h3>Blurred</h3>
+                <img src="data:image/png;base64,{{ blurred_img }}" alt="Blurred Image">
+            </div>
+            <div class="image-box">
+                <h3>Thresholded</h3>
+                <img src="data:image/png;base64,{{ thresholded_img }}" alt="Thresholded Image">
+            </div>
+            <div class="image-box">
+                <h3>Padded</h3>
+                <img src="data:image/png;base64,{{ padded_img }}" alt="Padded Image">
+            </div>
+            <div class="image-box">
+                <h3>Resized (224×224)</h3>
+                <img src="data:image/png;base64,{{ resized_img }}" alt="Resized Image">
+            </div>
+            <div class="image-box">
+                <h3>Normalized</h3>
+                <img src="data:image/png;base64,{{ normalized_img }}" alt="Normalized Image">
+            </div>
         </div>
 
         <h2>Prediction: {{ pred_label }} ({{ pred_confidence }}%)</h2>
